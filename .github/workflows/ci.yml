@@ -10,6 +10,11 @@ env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
   RUST_BACKTRACE: short
+  # Opt into Node.js 24 for JS actions that still bundle Node 20
+  # (Swatinem/rust-cache@v2 etc.). Node 20 is the default until
+  # June 2026; this silences the deprecation warnings without
+  # waiting for new action releases.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   fmt:
