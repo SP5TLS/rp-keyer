@@ -11,9 +11,7 @@ use rp_keyer::midi_interrupt::MidiInterruptClass;
 use rp_keyer::buttons::{ButtonInput, ButtonPanel};
 use rp_keyer::buzzer::Buzzer;
 use rp_keyer::radio_key::RadioKey;
-use rp_keyer::shared::{
-    ConfigDirtySignal, SharedConfig, SharedDecoder, UsbStateSignal,
-};
+use rp_keyer::shared::{ConfigDirtySignal, SharedConfig, SharedDecoder, UsbStateSignal};
 use rp_keyer::storage::{self, AsyncFlash, FLASH_TOTAL_SIZE};
 use rp_keyer::ui::{OledI2c, Ui};
 use rp_keyer::usb_emit_task::UsbEmitApp;

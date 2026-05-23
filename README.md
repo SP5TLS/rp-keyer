@@ -9,8 +9,7 @@ self-contained CW (Morse) keyer with:
   [`radio-utils-cw-decoder`](https://crates.io/crates/radio-utils-cw-decoder)
   feeding the OLED decoded-text row,
 * USB MIDI + USB CDC SERIAL_STATE paddle interface (same wire contract
-  as [cw-adapter](https://github.com/sp5tls/cw-adapter) so existing
-  vail-adapter clients keep working),
+  as [cw-adapter](https://github.com/sp5tls/cw-adapter)),
 * PWM-driven passive piezo buzzer for sidetone,
 * 2N2222 NPN driver to key a real radio,
 * SSD1306 128×64 OLED + 4-button menu for keyer settings.
