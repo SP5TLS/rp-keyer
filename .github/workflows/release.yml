@@ -60,9 +60,13 @@ jobs:
         uses: cargo-bins/cargo-binstall@v1.14.1
 
       - name: Install elf2uf2-rs + cargo-binutils
+        # `--force` is load-bearing: Swatinem/rust-cache restores binstall's
+        # "already installed" metadata without always restoring the matching
+        # `~/.cargo/bin/` binaries, so a plain `cargo binstall` will short-
+        # circuit and leave `rust-objcopy` missing on cache hits.
         run: |
-          cargo binstall -y cargo-binutils
-          cargo binstall -y elf2uf2-rs
+          cargo binstall -y --force cargo-binutils
+          cargo binstall -y --force elf2uf2-rs
 
       - name: Build firmware
         run: |
