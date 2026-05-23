@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: short
+
+jobs:
+  fmt:
+    name: cargo fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all -- --check
+
+  build-rp2040:
+    name: build (thumbv6m-none-eabi, rp2040)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv6m-none-eabi
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: rp2040
+      - run: cargo clippy --target thumbv6m-none-eabi --features rp2040,serial,midi --bins -- -D warnings
+      - run: cargo build --target thumbv6m-none-eabi --features rp2040,serial,midi --bin rp2040 --release
+
+  build-rp2350:
+    name: build (thumbv8m.main-none-eabihf, rp2350)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv8m.main-none-eabihf
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: rp2350
+      - run: cargo clippy --target thumbv8m.main-none-eabihf --features rp2350,serial,midi --bins -- -D warnings
+      - run: cargo build --target thumbv8m.main-none-eabihf --features rp2350,serial,midi --bin rp2350 --release

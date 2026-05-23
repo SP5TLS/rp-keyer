@@ -1,0 +1,130 @@
+name: Release UF2 firmware
+
+# Tag-driven: `vX.Y.Z` builds RP2040 + RP2350 UF2s and attaches them
+# to the GitHub release. `workflow_dispatch` lets you build without
+# tagging by providing an arbitrary tag name.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Tag name for the release"
+        required: true
+        default: "v0.0.0-dev"
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: short
+
+jobs:
+  build:
+    name: Build ${{ matrix.label }} UF2
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: rp2040
+            target: thumbv6m-none-eabi
+            bin: rp2040
+            chip_feat: rp2040
+            family_patch: false
+          - label: rp2350
+            target: thumbv8m.main-none-eabihf
+            bin: rp2350
+            chip_feat: rp2350
+            # elf2uf2-rs hardcodes the RP2040 family ID — rewrite to
+            # RP2350-ARM-S or the Pico 2 BOOTSEL drive rejects the file.
+            family_patch: true
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+          components: llvm-tools-preview
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.label }}
+
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@v1.14.1
+
+      - name: Install elf2uf2-rs + cargo-binutils
+        run: |
+          cargo binstall -y cargo-binutils
+          cargo binstall -y elf2uf2-rs
+
+      - name: Build firmware
+        run: |
+          cargo build --release \
+            --target ${{ matrix.target }} \
+            --features ${{ matrix.chip_feat }},serial,midi \
+            --bin ${{ matrix.bin }}
+
+      - name: Resolve release tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "name=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "name=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Package artifacts
+        run: |
+          ELF=target/${{ matrix.target }}/release/${{ matrix.bin }}
+          BASE=rp-keyer-${{ steps.tag.outputs.name }}-${{ matrix.label }}
+
+          $HOME/.cargo/bin/rust-objcopy -O binary "$ELF" "$BASE.bin"
+          $HOME/.cargo/bin/elf2uf2-rs "$ELF" "$BASE.uf2"
+
+          if [ "${{ matrix.family_patch }}" = "true" ]; then
+            python3 scripts/patch_uf2_family.py "$BASE.uf2"
+          fi
+
+          cp "$ELF" "$BASE.elf"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.label }}
+          path: rp-keyer-*
+          if-no-files-found: error
+
+  release:
+    name: Attach UF2s to GitHub release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Resolve release tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "name=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "name=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download all firmware artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: firmware
+          pattern: firmware-*
+          merge-multiple: true
+
+      - name: Create / update GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          files: firmware/*
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
