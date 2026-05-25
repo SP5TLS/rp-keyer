@@ -364,33 +364,47 @@ async fn main(spawner: Spawner) {
     let usb = builder.build();
     spawner.spawn(usb_task(usb).unwrap());
 
-    // ── Paddles ──────────────────────────────────────────────────────
+    // Pinout is grouped into two physical clusters on the Pico header so
+    // both flying-lead wiring and a future PCB stay tidy. See README.
+    //
+    // Left edge — keyer hardware:
+    //   pin 14 GP10 buzzer (PWM5A)
+    //   pin 15 GP11 radio key out (2N2222 base)
+    //   pin 19 GP14 Dit paddle  (TRS tip,   GND on pin 18)
+    //   pin 20 GP15 Dah paddle  (TRS ring,  GND on pin 18)
+    //
+    // Right edge — OLED + 4-button combo module (8-wire connector):
+    //   pin 21 GP16 K1 = UP
+    //   pin 22 GP17 K2 = DOWN
+    //   pin 23 GND  module GND
+    //   pin 24 GP18 K3 = OK
+    //   pin 25 GP19 K4 = BACK
+    //   pin 26 GP20 SDA (I2C0)
+    //   pin 27 GP21 SCL (I2C0)
+    //   pin 36 3V3  module VCC
+
     let dit_pin = Input::new(p.PIN_14, Pull::Up);
     let dah_pin = Input::new(p.PIN_15, Pull::Up);
 
-    // ── Radio key (2N2222 base) ──────────────────────────────────────
-    let radio_key = RadioKey::new(Output::new(p.PIN_18, Level::Low));
+    let radio_key = RadioKey::new(Output::new(p.PIN_11, Level::Low));
 
-    // ── Buzzer on PWM1 channel B (PIN_19) ────────────────────────────
     let buzzer = {
         let pwm_cfg = PwmConfig::default();
-        let pwm = Pwm::new_output_b(p.PWM_SLICE1, p.PIN_19, pwm_cfg);
+        let pwm = Pwm::new_output_a(p.PWM_SLICE5, p.PIN_10, pwm_cfg);
         Buzzer::new(pwm)
     };
 
-    // ── OLED I2C0: SDA=GP20, SCL=GP21 ───────────────────────────────
     let oled_i2c: OledI2c = {
         let mut cfg = I2cConfig::default();
         cfg.frequency = 400_000;
         I2c::new_blocking(p.I2C0, p.PIN_21, p.PIN_20, cfg)
     };
 
-    // ── Buttons: UP=GP10, DOWN=GP11, OK=GP12, BACK=GP13 ──────────────
     let buttons = ButtonPanel {
-        up: ButtonInput::new(Input::new(p.PIN_10, Pull::Up)),
-        down: ButtonInput::new(Input::new(p.PIN_11, Pull::Up)),
-        ok: ButtonInput::new(Input::new(p.PIN_12, Pull::Up)),
-        back: ButtonInput::new(Input::new(p.PIN_13, Pull::Up)),
+        up: ButtonInput::new(Input::new(p.PIN_16, Pull::Up)),
+        down: ButtonInput::new(Input::new(p.PIN_17, Pull::Up)),
+        ok: ButtonInput::new(Input::new(p.PIN_18, Pull::Up)),
+        back: ButtonInput::new(Input::new(p.PIN_19, Pull::Up)),
     };
 
     // ── Spawn UI + USB emit + persistence on the thread executor ─────

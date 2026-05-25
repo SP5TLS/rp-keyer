@@ -266,14 +266,17 @@ async fn main(spawner: Spawner) {
     let usb = builder.build();
     spawner.spawn(usb_task(usb).unwrap());
 
+    // See src/bin/rp2040.rs for the pin-cluster rationale; the Pico 2 is
+    // pin-compatible so we mirror the layout here.
+
     let dit_pin = Input::new(p.PIN_14, Pull::Up);
     let dah_pin = Input::new(p.PIN_15, Pull::Up);
 
-    let radio_key = RadioKey::new(Output::new(p.PIN_18, Level::Low));
+    let radio_key = RadioKey::new(Output::new(p.PIN_11, Level::Low));
 
     let buzzer = {
         let pwm_cfg = PwmConfig::default();
-        let pwm = Pwm::new_output_b(p.PWM_SLICE1, p.PIN_19, pwm_cfg);
+        let pwm = Pwm::new_output_a(p.PWM_SLICE5, p.PIN_10, pwm_cfg);
         Buzzer::new(pwm)
     };
 
@@ -284,10 +287,10 @@ async fn main(spawner: Spawner) {
     };
 
     let buttons = ButtonPanel {
-        up: ButtonInput::new(Input::new(p.PIN_10, Pull::Up)),
-        down: ButtonInput::new(Input::new(p.PIN_11, Pull::Up)),
-        ok: ButtonInput::new(Input::new(p.PIN_12, Pull::Up)),
-        back: ButtonInput::new(Input::new(p.PIN_13, Pull::Up)),
+        up: ButtonInput::new(Input::new(p.PIN_16, Pull::Up)),
+        down: ButtonInput::new(Input::new(p.PIN_17, Pull::Up)),
+        ok: ButtonInput::new(Input::new(p.PIN_18, Pull::Up)),
+        back: ButtonInput::new(Input::new(p.PIN_19, Pull::Up)),
     };
 
     spawner.spawn(ui_task(oled_i2c, buttons, shared_config).unwrap());

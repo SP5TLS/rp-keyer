@@ -1,6 +1,6 @@
 //! PWM-driven passive piezo buzzer for sidetone.
 //!
-//! Drives the buzzer pin (PWM channel B) at the configured sidetone
+//! Drives the buzzer pin (PWM channel A) at the configured sidetone
 //! frequency with a 50 % square wave while keyed, and parks duty at 0 %
 //! when idle so the buzzer is silent.
 //!
@@ -67,7 +67,7 @@ impl Buzzer {
     }
 
     /// Gate the PWM output: `true` engages the configured tone, `false`
-    /// silences it (compare_b = 0).
+    /// silences it (compare_a = 0).
     pub fn set_keyed(&mut self, on: bool) {
         if self.keying == on {
             return;
@@ -93,13 +93,13 @@ impl Buzzer {
         // 50 % duty = top / 2 → square wave (loudest tone from a piezo).
         // Scale by volume; floor at 0 when silenced.
         //
-        // `compare_b == 0` plus channel-B output enabled & non-inverted
-        // (the embassy-rp `Pwm::new_output_b` default) parks the pin
+        // `compare_a == 0` plus channel-A output enabled & non-inverted
+        // (the embassy-rp `Pwm::new_output_a` default) parks the pin
         // low for the entire period — that's the silent state we
         // want.  If anyone ever flips the channel polarity, audit
         // `set_keyed(false)` and `safe_stop` together.
         let max_duty = (top / 2) as u32;
-        let compare_b = if self.keying {
+        let compare_a = if self.keying {
             (max_duty as f32 * self.current_volume) as u16
         } else {
             0
@@ -108,7 +108,7 @@ impl Buzzer {
         let top_shrunk = top < self.cfg.top;
         self.cfg.divider = FixedU16::<U4>::from_num(div_int);
         self.cfg.top = top;
-        self.cfg.compare_b = compare_b;
+        self.cfg.compare_a = compare_a;
         self.pwm.set_config(&self.cfg);
 
         if top_shrunk {

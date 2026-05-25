@@ -16,23 +16,40 @@ self-contained CW (Morse) keyer with:
 
 ## Pinout (default for both Pico / Pico 2)
 
-| Function          | Pin       | Notes                                   |
-|-------------------|-----------|-----------------------------------------|
-| Dit paddle        | GP14      | Active-low, internal pull-up            |
-| Dah paddle        | GP15      | Active-low, internal pull-up            |
-| Radio key out     | GP18      | Drives 2N2222 base via 1 kΩ resistor    |
-| Buzzer            | GP19      | PWM1B, drives passive piezo             |
-| OLED SDA          | GP20      | I2C0                                    |
-| OLED SCL          | GP21      | I2C0                                    |
-| Button UP         | GP10      | Active-low, internal pull-up            |
-| Button DOWN       | GP11      | "                                       |
-| Button OK         | GP12      | "                                       |
-| Button BACK       | GP13      | "                                       |
+Pins are grouped into two physical clusters on the Pico header so wiring
+stays tidy whether you fly leads or build a PCB.
+
+**Left edge — keyer hardware:**
+
+| Function          | Pin | GPIO | Notes                                        |
+|-------------------|-----|------|----------------------------------------------|
+| Buzzer / GND      | 13  | GND  | Shared with radio-key return                 |
+| Buzzer            | 14  | GP10 | PWM5A, drives passive piezo                  |
+| Radio key out     | 15  | GP11 | Drives 2N2222 base via 1 kΩ resistor         |
+| Paddle GND        | 18  | GND  | TRS sleeve                                   |
+| Dit paddle        | 19  | GP14 | TRS tip, active-low, internal pull-up        |
+| Dah paddle        | 20  | GP15 | TRS ring, active-low, internal pull-up       |
+
+**Right edge — OLED + 4-button combo module (single 8-wire connector):**
+
+| Module pin | Pico pin | GPIO  | Function                            |
+|------------|----------|-------|-------------------------------------|
+| K1         | 21       | GP16  | Button UP   (top of stack)          |
+| K2         | 22       | GP17  | Button DOWN                         |
+| GND        | 23       | GND   | Module ground                       |
+| K3         | 24       | GP18  | Button OK                           |
+| K4         | 25       | GP19  | Button BACK (bottom of stack)       |
+| SDA        | 26       | GP20  | I2C0 SDA                            |
+| SCL        | 27       | GP21  | I2C0 SCL                            |
+| VCC        | 36       | 3V3   | Single jumper to 3V3 OUT            |
+
+All eight module wires land on the same edge of the Pico — seven on the
+contiguous right-side strip (pins 21–27) plus one jumper to 3V3.
 
 ## Radio key wiring
 
 ```
-   GP18 ─── 1 kΩ ──── Base
+   GP11 ─── 1 kΩ ──── Base
                        │
                     2N2222 NPN
                        │
@@ -46,10 +63,10 @@ self-contained CW (Morse) keyer with:
 
 Connections:
 
-* **Base** ← GP18 through the 1 kΩ current-limiting resistor.
+* **Base** ← GP11 through the 1 kΩ current-limiting resistor.
 * **Collector** ← radio key tip (or PTT line). The radio's keying
   supply provides the pull-up; the 2N2222 sinks this line to ground
-  when GP18 is high.
+  when GP11 is high.
 * **Emitter** → GND, shared with the radio key sleeve so the
   firmware and the radio agree on ground reference.
 
