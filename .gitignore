@@ -1,3 +1,12 @@
 /target
 Cargo.lock.bak
 .DS_Store
+
+# KiCad — per-user / auto-generated artifacts
+*.kicad_prl
+*-backups/
+*.kicad_bak
+fp-info-cache
+
+# VS Code Local History extension
+.history/

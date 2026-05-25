@@ -73,6 +73,27 @@ Connections:
 Drop a flyback diode across the collector–emitter (cathode to
 collector) if your radio's key line is inductive.
 
+The schematic uses a **2N3904** in this position; a **2N2222** is a
+drop-in substitute — both are general-purpose NPN signal transistors
+with more than enough current capacity for keying a typical radio.
+
+## Schematics
+
+A KiCad 8 project for the reference carrier board lives under
+[`schematics/rp-keyer/`](schematics/rp-keyer/). It contains:
+
+* `rp-keyer1.kicad_pro` — project file (open this in KiCad)
+* `rp-keyer1.kicad_sch` — schematic
+* `rp-keyer1.kicad_pcb` — PCB layout
+
+![Schematic](schematics/rp-keyer/schematic.png)
+
+The schematic captures the pinout above 1:1: paddle TRS jack `J1` on
+GP14/GP15, radio-key TRS jack `J2` driven through Q1+R1 from GP11,
+buzzer `BZ1` on GP10, and the 8-pin `SSD1306_BUTTONS_MODULE` connector
+`J3` carrying SDA/SCL plus K1..K4 to GP16..GP21 with 3V3 + GND from the
+top of the Pico.
+
 ## Pre-built firmware
 
 Each tagged release publishes ready-to-flash `.uf2` files for both
